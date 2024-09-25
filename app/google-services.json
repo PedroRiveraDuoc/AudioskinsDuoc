@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "199846862304",
+    "firebase_url": "https://appmovilduoc-52a3a-default-rtdb.firebaseio.com",
+    "project_id": "appmovilduoc-52a3a",
+    "storage_bucket": "appmovilduoc-52a3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199846862304:android:2b57354c78bc0349c29f85",
+        "android_client_info": {
+          "package_name": "com.example.audioskinsduoc"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvLdpC90qUiRhx02Ut9N7RF-UPAbDqHjU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
