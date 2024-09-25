@@ -1,6 +1,7 @@
 package com.example.audioskinsduoc
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -10,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -17,12 +19,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.util.PatternsCompat
+import com.google.firebase.database.FirebaseDatabase
 import java.util.regex.Pattern
 
 class RegisterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             RegistroUsuarioScreen()
         }
@@ -31,6 +33,7 @@ class RegisterActivity : ComponentActivity() {
 
 @Composable
 fun RegistroUsuarioScreen() {
+    val context = LocalContext.current
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var reingresarPassword by remember { mutableStateOf("") }
@@ -230,9 +233,39 @@ fun RegistroUsuarioScreen() {
                 // Botón de registrarse
                 Button(
                     onClick = {
-                        if (!emailError && !passwordError && !reingresarPasswordError && !nombreError) {
+                        // Validar que no haya errores en los campos y que estén completos
+                        if (!emailError && !passwordError && !reingresarPasswordError && !nombreError &&
+                            email.isNotEmpty() && nombre.isNotEmpty() && apellidoPaterno.isNotEmpty() &&
+                            apellidoMaterno.isNotEmpty() && telefono.isNotEmpty() && direccion.isNotEmpty() &&
+                            password.isNotEmpty() && reingresarPassword.isNotEmpty()) {
+
                             isLoading = true
-                            // Lógica para manejar el registro
+
+                            val database = FirebaseDatabase.getInstance()
+                            val ref = database.getReference("usuarios")
+
+                            val usuario = Usuarios(
+                                email = email,
+                                nombre = nombre,
+                                apellidoPaterno = apellidoPaterno,
+                                apellidoMaterno = apellidoMaterno,
+                                telefono = telefono,
+                                direccion = direccion,
+                            )
+
+                            ref.push().setValue(usuario).addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    Toast.makeText(context, "Data Ingresada", Toast.LENGTH_LONG).show()
+                                    isLoading = false // Oculta la barra de progreso
+                                } else {
+                                    Toast.makeText(context, "Error al ingresar el usuario", Toast.LENGTH_LONG).show()
+                                    isLoading = false // Oculta la barra de progreso
+                                }
+                            }
+
+                        } else {
+                            // Opcional: Mostrar un mensaje de error si los campos no están completos
+                            Toast.makeText(context, "Por favor, completa todos los campos correctamente.", Toast.LENGTH_LONG).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
