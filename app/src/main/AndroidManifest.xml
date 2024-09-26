@@ -23,12 +23,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Registro de RegisterActivity -->
-        <activity
-            android:name=".RegisterActivity"
-            android:exported="true"
-            android:label="Registro de Usuario"
-            android:theme="@style/Theme.AudioskinsDuoc" />
 
     </application>
 </manifest>

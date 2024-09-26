@@ -1,39 +1,35 @@
 package com.example.audioskinsduoc
 
-import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.util.PatternsCompat
+import androidx.navigation.NavHostController
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.launch
 import java.util.regex.Pattern
 
-class RegisterActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            RegistroUsuarioScreen()
-        }
-    }
-}
-
 @Composable
-fun RegistroUsuarioScreen() {
+fun SignupPage(
+    modifier: Modifier = Modifier,
+    navController: NavHostController,
+    authViewModel: AuthViewModel
+) {
+    val authState = authViewModel.authState.observeAsState()
     val context = LocalContext.current
+
+    // Estado para los campos de texto
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var reingresarPassword by remember { mutableStateOf("") }
@@ -49,7 +45,6 @@ fun RegistroUsuarioScreen() {
     var reingresarPasswordError by remember { mutableStateOf(false) }
     var nombreError by remember { mutableStateOf(false) }
     var passwordErrorMessage by remember { mutableStateOf("") }
-
     var isLoading by remember { mutableStateOf(false) }
 
     // Expresión regular para las validaciones de la contraseña
@@ -67,8 +62,26 @@ fun RegistroUsuarioScreen() {
         return passwordPattern.matcher(password).matches()
     }
 
+    LaunchedEffect(authState.value) {
+        when (authState.value) {
+            is AuthState.Authenticated -> {
+                isLoading = false
+                navController.navigate(route = "home")
+            }
+            is AuthState.Error -> {
+                isLoading = false
+                Toast.makeText(
+                    context,
+                    (authState.value as AuthState.Error).message,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            else -> Unit
+        }
+    }
+
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
         contentAlignment = Alignment.Center
@@ -92,21 +105,21 @@ fun RegistroUsuarioScreen() {
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                // Email
+                // Campo de correo
                 TextField(
                     value = email,
                     onValueChange = {
                         email = it
-                        emailError = !PatternsCompat.EMAIL_ADDRESS.matcher(email).matches()
+                        emailError = !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
                     },
-                    label = { Text(text = "Email") },
+                    label = { Text(text = "Correo Electrónico") },
                     isError = emailError,
                     modifier = Modifier.fillMaxWidth(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
                 if (emailError) {
                     Text(
-                        text = "Por favor ingrese un email válido",
+                        text = "Por favor, ingrese un correo electrónico válido",
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Start)
                     )
@@ -117,7 +130,7 @@ fun RegistroUsuarioScreen() {
                 // Contraseña
                 TextField(
                     value = password,
-                    onValueChange = { it ->
+                    onValueChange = {
                         password = it
                         passwordError = !isPasswordValid(password)
                         passwordErrorMessage = when {
@@ -230,20 +243,17 @@ fun RegistroUsuarioScreen() {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Botón de registrarse
+                // Botón de registro
                 Button(
                     onClick = {
-                        // Validar que no haya errores en los campos y que estén completos
                         if (!emailError && !passwordError && !reingresarPasswordError && !nombreError &&
                             email.isNotEmpty() && nombre.isNotEmpty() && apellidoPaterno.isNotEmpty() &&
                             apellidoMaterno.isNotEmpty() && telefono.isNotEmpty() && direccion.isNotEmpty() &&
-                            password.isNotEmpty() && reingresarPassword.isNotEmpty()) {
-
+                            password.isNotEmpty() && reingresarPassword.isNotEmpty()
+                        ) {
                             isLoading = true
-
                             val database = FirebaseDatabase.getInstance()
                             val ref = database.getReference("usuarios")
-
                             val usuario = Usuarios(
                                 email = email,
                                 nombre = nombre,
@@ -252,31 +262,31 @@ fun RegistroUsuarioScreen() {
                                 telefono = telefono,
                                 direccion = direccion,
                             )
-
                             ref.push().setValue(usuario).addOnCompleteListener { task ->
+                                isLoading = false
                                 if (task.isSuccessful) {
-                                    Toast.makeText(context, "Data Ingresada", Toast.LENGTH_LONG).show()
-                                    isLoading = false // Oculta la barra de progreso
+                                    authViewModel.signup(email, password)
                                 } else {
                                     Toast.makeText(context, "Error al ingresar el usuario", Toast.LENGTH_LONG).show()
-                                    isLoading = false // Oculta la barra de progreso
                                 }
                             }
-
                         } else {
-                            // Opcional: Mostrar un mensaje de error si los campos no están completos
-                            Toast.makeText(context, "Por favor, completa todos los campos correctamente.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(
+                                context,
+                                "Por favor, complete todos los campos correctamente",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
                 ) {
-                    Text(text = "Registrarse", color = Color.White)
+                    Text(text = "Crear Cuenta", color = Color.White)
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Barra de progreso (solo visible si isLoading es true)
+                // Barra de progreso (visible solo si isLoading es true)
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -287,10 +297,4 @@ fun RegistroUsuarioScreen() {
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewRegistroUsuarioScreen() {
-    RegistroUsuarioScreen()
 }
