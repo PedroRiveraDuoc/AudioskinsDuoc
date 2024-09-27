@@ -1,10 +1,11 @@
 package com.example.audioskinsduoc
 
 data class Usuarios(
-    var email: String = "",
-    var nombre: String = "",
-    var apellidoPaterno: String = "",
-    var apellidoMaterno: String = "",
-    var telefono: String = "",
-    var direccion: String = ""
+    var id: String = "", // Nuevo campo para la identificación
+    val email: String = "",
+    val nombre: String = "",
+    val apellidoPaterno: String = "",
+    val apellidoMaterno: String = "",
+    val telefono: String = "",
+    val direccion: String = ""
 )

@@ -40,5 +40,11 @@ fun MyAppNavigation(
                 authViewModel = authViewModel
             )
         }
+
+        composable(route = "user_management") {
+            UserManagement(
+                navController = navController)
+        }
+
     }
 }

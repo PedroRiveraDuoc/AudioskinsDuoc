@@ -1,6 +1,7 @@
 package com.example.audioskinsduoc
 
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -254,7 +255,12 @@ fun SignupPage(
                             isLoading = true
                             val database = FirebaseDatabase.getInstance()
                             val ref = database.getReference("usuarios")
+
+                            // Generar un ID único para el usuario
+                            val userId = ref.push().key ?: ""
+
                             val usuario = Usuarios(
+                                id = userId, // Asignar el ID generado al usuario
                                 email = email,
                                 nombre = nombre,
                                 apellidoPaterno = apellidoPaterno,
@@ -262,7 +268,9 @@ fun SignupPage(
                                 telefono = telefono,
                                 direccion = direccion,
                             )
-                            ref.push().setValue(usuario).addOnCompleteListener { task ->
+
+                            // Guardar el usuario en la base de datos con el ID generado
+                            ref.child(userId).setValue(usuario).addOnCompleteListener { task ->
                                 isLoading = false
                                 if (task.isSuccessful) {
                                     authViewModel.signup(email, password)
@@ -284,7 +292,25 @@ fun SignupPage(
                     Text(text = "Crear Cuenta", color = Color.White)
                 }
 
+
                 Spacer(modifier = Modifier.height(16.dp))
+
+
+                // Texto para redirigir a la pantalla de inicio de sesión
+                Text(
+                    text = "¿Ya tienes cuenta? Inicia sesión",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clickable {
+                            navController.navigate("login")
+                        }
+                        .padding(vertical = 8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+
+
 
                 // Barra de progreso (visible solo si isLoading es true)
                 if (isLoading) {
