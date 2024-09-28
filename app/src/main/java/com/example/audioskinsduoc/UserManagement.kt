@@ -14,15 +14,17 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.navigation.NavHostController
 import com.google.firebase.database.*
 
 @Composable
 fun UserManagement(navController: NavHostController) {
     val context = LocalContext.current
-    var userList by remember { mutableStateOf(listOf<Usuarios>()) } // Lista de usuarios
-    var selectedUser by remember { mutableStateOf<Usuarios?>(null) } // Usuario seleccionado para edición
-    var isEditing by remember { mutableStateOf(false) } // Estado para saber si estamos en modo edición
+    var userList by remember { mutableStateOf(listOf<Usuarios>()) }
+    var selectedUser by remember { mutableStateOf<Usuarios?>(null) }
+    var isEditing by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) } // Nuevo estado para la barra de progreso
 
     // Conexión con Firebase
     val database = FirebaseDatabase.getInstance()
@@ -35,26 +37,40 @@ fun UserManagement(navController: NavHostController) {
                 val users = mutableListOf<Usuarios>()
                 for (userSnapshot in snapshot.children) {
                     val user = userSnapshot.getValue(Usuarios::class.java)
-                    user?.id = userSnapshot.key ?: "" // Asigna el ID del usuario desde Firebase
                     if (user != null) users.add(user)
                 }
                 userList = users
+                isLoading = false
             }
 
             override fun onCancelled(error: DatabaseError) {
                 Toast.makeText(context, "Error al cargar usuarios", Toast.LENGTH_SHORT).show()
+                isLoading = false
             }
         })
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Título
         Text(
-            text = if (isEditing) "Editar Usuario" else "Administración de Usuarios",
+            text = "Administración de Usuarios", // Texto fijo
             fontSize = 24.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier
+                .padding(bottom = 16.dp)
+                .align(Alignment.CenterHorizontally)
         )
 
-        if (isEditing) {
+        if (isLoading) {
+            // Mostrar barra de progreso mientras se cargan los datos
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (isEditing) {
             // Formulario de edición
             UserEditForm(
                 user = selectedUser,
@@ -80,7 +96,7 @@ fun UserManagement(navController: NavHostController) {
             // Mostrar lista de usuarios
             LazyColumn {
                 items(userList) { user ->
-                    UserRow(
+                    UserCard(
                         user = user,
                         onEdit = {
                             selectedUser = it
@@ -103,21 +119,34 @@ fun UserManagement(navController: NavHostController) {
 }
 
 @Composable
-fun UserRow(user: Usuarios, onEdit: (Usuarios) -> Unit, onDelete: (Usuarios) -> Unit) {
-    Row(
+fun UserCard(user: Usuarios, onEdit: (Usuarios) -> Unit, onDelete: (Usuarios) -> Unit) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        elevation = CardDefaults.cardElevation(4.dp)
     ) {
-        Text(text = user.email)
-        Row {
-            TextButton(onClick = { onEdit(user) }) {
-                Text("Editar")
-            }
-            TextButton(onClick = { onDelete(user) }) {
-                Text("Eliminar", color = Color.Red)
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(text = "${user.nombre} ${user.apellidoPaterno}", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "Correo: ${user.email}", fontSize = 14.sp)
+            Text(text = "Teléfono: ${user.telefono}", fontSize = 14.sp)
+            Text(text = "Dirección: ${user.direccion}", fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                horizontalArrangement = Arrangement.End,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                TextButton(onClick = { onEdit(user) }) {
+                    Text("Editar", color = MaterialTheme.colorScheme.primary)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                TextButton(onClick = { onDelete(user) }) {
+                    Text("Eliminar", color = Color.Red)
+                }
             }
         }
     }
@@ -130,46 +159,99 @@ fun UserEditForm(
     onCancel: () -> Unit
 ) {
     var nombre by remember { mutableStateOf(user?.nombre ?: "") }
+    var apellidoPaterno by remember { mutableStateOf(user?.apellidoPaterno ?: "") }
+    var apellidoMaterno by remember { mutableStateOf(user?.apellidoMaterno ?: "") }
     var telefono by remember { mutableStateOf(user?.telefono ?: "") }
     var direccion by remember { mutableStateOf(user?.direccion ?: "") }
 
-    Column {
-        TextField(
-            value = nombre,
-            onValueChange = { nombre = it },
-            label = { Text("Nombre") },
-            modifier = Modifier.fillMaxWidth()
-        )
+    // Usamos Box para centrar la Card verticalmente
+    Box(
+        modifier = Modifier
+            .fillMaxSize(),
+        contentAlignment = Alignment.Center // Centrar el contenido
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp), // Margen alrededor de la Card
+            elevation = CardDefaults.cardElevation(8.dp) // Sombra para la Card
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(16.dp) // Espacio interno de la Card
+            ) {
+                // Título dentro de la tarjeta
+                Text(
+                    text = "Editar Usuario",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 16.dp)
+                )
 
-        Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = nombre,
+                    onValueChange = { nombre = it },
+                    label = { Text("Nombre") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        TextField(
-            value = telefono,
-            onValueChange = { telefono = it },
-            label = { Text("Teléfono") },
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
-        )
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = apellidoPaterno,
+                    onValueChange = { apellidoPaterno = it },
+                    label = { Text("Apellido Paterno") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        TextField(
-            value = direccion,
-            onValueChange = { direccion = it },
-            label = { Text("Dirección") },
-            modifier = Modifier.fillMaxWidth()
-        )
+                Spacer(modifier = Modifier.height(8.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = apellidoMaterno,
+                    onValueChange = { apellidoMaterno = it },
+                    label = { Text("Apellido Materno") },
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-        Row {
-            Button(onClick = { onSave(user?.copy(nombre = nombre, telefono = telefono, direccion = direccion)) }) {
-                Text("Guardar")
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            TextButton(onClick = { onCancel() }) {
-                Text("Cancelar")
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextField(
+                    value = telefono,
+                    onValueChange = { telefono = it },
+                    label = { Text("Teléfono") },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                TextField(
+                    value = direccion,
+                    onValueChange = { direccion = it },
+                    label = { Text("Dirección") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(onClick = { onSave(user?.copy(nombre = nombre, apellidoPaterno = apellidoPaterno, apellidoMaterno = apellidoMaterno, telefono = telefono, direccion = direccion)) }) {
+                        Text("Guardar")
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                    TextButton(onClick = { onCancel() }) {
+                        Text("Cancelar")
+                    }
+                }
             }
         }
     }
 }
+
+
+

@@ -23,7 +23,7 @@ import androidx.navigation.NavHostController
 fun LoginPage(
     modifier: Modifier = Modifier,
     navController: NavHostController,
-    onLoginSuccess: () -> Unit,  // Agregar el parámetro onLoginSuccess
+    onLoginSuccess: () -> Unit,
     authViewModel: AuthViewModel
 ) {
     val context = LocalContext.current

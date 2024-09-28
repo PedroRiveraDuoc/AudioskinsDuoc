@@ -1,7 +1,9 @@
 package com.example.audioskinsduoc
 
+import TextToSpeechPage
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -44,6 +46,10 @@ fun MyAppNavigation(
         composable(route = "user_management") {
             UserManagement(
                 navController = navController)
+        }
+
+        composable(route = "text_to_speech") {
+            TextToSpeechPage(context = LocalContext.current)
         }
 
     }
