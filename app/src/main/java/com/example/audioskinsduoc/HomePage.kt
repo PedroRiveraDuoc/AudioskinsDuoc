@@ -1,5 +1,6 @@
 package com.example.audioskinsduoc
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,11 +10,16 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+
+
+
 
 @Composable
 fun HomePage(
@@ -56,6 +62,17 @@ fun HomePage(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Logo de la aplicación
+                Image(
+                    painter = painterResource(id = R.drawable.logo),
+                    contentDescription = "App Logo",
+                    modifier = Modifier
+                        .size(300.dp) // Ajusta el tamaño según tus necesidades
+                        .padding(bottom = 16.dp),
+                    contentScale = ContentScale.Crop
+                )
+
+
                 // Título de bienvenida
                 Text(
                     text = "¡Bienvenid@, ${userName.value}!",

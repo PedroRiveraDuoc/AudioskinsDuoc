@@ -293,9 +293,6 @@ fun SignupPage(
                 }
 
 
-                Spacer(modifier = Modifier.height(16.dp))
-
-
                 // Texto para redirigir a la pantalla de inicio de sesión
                 Text(
                     text = "¿Ya tienes cuenta? Inicia sesión",
@@ -305,6 +302,7 @@ fun SignupPage(
                             navController.navigate("login")
                         }
                         .padding(vertical = 8.dp)
+
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
