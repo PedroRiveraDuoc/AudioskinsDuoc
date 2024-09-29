@@ -6,14 +6,18 @@ import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.FirebaseDatabase.getInstance
 
 class AuthViewModel(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+    private val database: FirebaseDatabase = getInstance()
 ) : ViewModel() {
-
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
+
+    // LiveData para almacenar el nombre del usuario
+    private val _userName = MutableLiveData<String>()
+    val userName: LiveData<String> = _userName
 
     init {
         checkAuthService()
@@ -46,13 +50,24 @@ class AuthViewModel(
     private fun fetchUserName() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
-            val userId = currentUser.uid
-            val ref: DatabaseReference = database.getReference("usuarios").child(userId)
+            val userEmail = currentUser.email ?: return
 
+            // Referencia a la base de datos
+            val ref: DatabaseReference = database.getReference("usuarios")
+
+            // Buscar el usuario por correo electrónico
             ref.get().addOnSuccessListener { snapshot ->
-                // Accede a la propiedad "nombre" del usuario en Firebase
-                val userName = snapshot.child("nombre").getValue(String::class.java) ?: "Usuario"
-                _authState.value = AuthState.Authenticated(userName)
+                for (child in snapshot.children) {
+                    val usuario = child.getValue(Usuarios::class.java)
+                    if (usuario?.email == userEmail) {
+                        val nombre = usuario.nombre ?: "Usuario"
+                        _userName.value = nombre
+                        _authState.value = AuthState.Authenticated(nombre)
+                        return@addOnSuccessListener
+                    }
+                }
+                // Si no encuentra el usuario
+                _authState.value = AuthState.Error("Usuario no encontrado")
             }.addOnFailureListener {
                 _authState.value = AuthState.Error("Error al obtener los datos del usuario")
             }
@@ -78,5 +93,6 @@ class AuthViewModel(
     fun signOut() {
         auth.signOut()
         _authState.value = AuthState.Unauthenticated
+        _userName.value = "" // Limpia el nombre de usuario cuando se cierra sesión
     }
 }

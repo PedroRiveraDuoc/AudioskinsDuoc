@@ -22,6 +22,7 @@ fun HomePage(
     authViewModel: AuthViewModel
 ) {
     val authState = authViewModel.authState.observeAsState()
+    val userName = authViewModel.userName.observeAsState("")
     val context = LocalContext.current
 
     // `LaunchedEffect` para observar el estado de autenticación
@@ -57,7 +58,7 @@ fun HomePage(
             ) {
                 // Título de bienvenida
                 Text(
-                    text = "¡Bienvenido/aa!",
+                    text = "¡Bienvenid@, ${userName.value}!",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
                 )
