@@ -57,7 +57,7 @@ fun HomePage(
             ) {
                 // Título de bienvenida
                 Text(
-                    text = "¡Bienvenido/a!",
+                    text = "¡Bienvenido/aa!",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold
                 )

@@ -4,10 +4,14 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 
-class AuthViewModel : ViewModel() {
-    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+class AuthViewModel(
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
+    private val database: FirebaseDatabase = FirebaseDatabase.getInstance()
+) : ViewModel() {
+
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
 
@@ -43,8 +47,7 @@ class AuthViewModel : ViewModel() {
         val currentUser = auth.currentUser
         if (currentUser != null) {
             val userId = currentUser.uid
-            val database = FirebaseDatabase.getInstance()
-            val ref = database.getReference("usuarios").child(userId)
+            val ref: DatabaseReference = database.getReference("usuarios").child(userId)
 
             ref.get().addOnSuccessListener { snapshot ->
                 // Accede a la propiedad "nombre" del usuario en Firebase
